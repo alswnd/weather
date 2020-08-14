@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeWork | Weather</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script
+      type="text/javascript"
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f082452b76e09cdd8ccad17634247250"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
+      crossorigin="anonymous"
+    />
+    <script
+      defer
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+      integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      defer
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+      integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+      crossorigin="anonymous"
+    ></script>
+
+    <style>
+      ul {
+        list-style: none;
+      }
+
+      body {
+        margin: 0;
+        background-color: deepskyblue;
+        font-family: "Noto Sans KR", sans-serif;
+      }
+
+      /* Header */
+      .day-weather-header {
+        position: absolute;
+        z-index: 99;
+      }
+
+      .main-header {
+        font-size: 24px;
+      }
+
+      .day-weather-component {
+        display: flex;
+        align-items: center;
+      }
+
+      /* .day-temp-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 15px;
+      } */
+
+      .day-temp {
+        font-size: 10px;
+      }
+
+      .day-image-wrapper {
+        width: 60px;
+        height: 60px;
+      }
+
+      .day-image-wrapper img {
+        width: 100%;
+      }
+
+      .day-information-container {
+        margin-left: 20px;
+        padding-top: 5px;
+      }
+
+      .day-information-location,
+      .day-information-humidity {
+        display: flex;
+        align-items: center;
+      }
+
+      .day-information-humidity {
+        margin-top: 5px;
+      }
+
+      .day-information-text {
+        margin-left: 5px;
+      }
+
+      /* Main */
+      .five-days-weather-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 80px 30px 30px 20px;
+        border-top: 1px solid #dddddd;
+      }
+
+      .weather-component {
+        padding: 15px 20px;
+        width: 20%;
+        max-width: 280px;
+        min-width: 250px;
+        min-height: 450px;
+        text-align: center;
+        margin: 20px;
+        box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.4);
+        background-color: white;
+      }
+
+      .weather-date {
+        font-size: 24px;
+        color: gray;
+      }
+
+      .weather-wrapper {
+        margin-top: 50px;
+      }
+
+      .weather {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      @media all and (max-width: 768px) {
+        .main-header {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div
+        class="day-weather-header d-flex flex-column shadow-lg p-3 mb-5 bg-white rounded"
+      >
+        <div class="main-header text-center">Local Weather</div>
+
+        <div class="card" style="width: 18rem;">
+          <ul class="day-weather-card list-group list-group-flush">
+            <!-- <li class="day-image-wrapper"></li>
+
+            <li class="day-temp-container header-temp list-group-item">
+              Cras justo odio
+            </li>
+            <li class="day-information-location list-group-item">
+              Dapibus ac facilisis in
+            </li>
+            <li class="day-information-humidity list-group-item">
+              Vestibulum at eros
+            </li> -->
+          </ul>
+        </div>
+
+        <div>
+          지도를 클릭하여 지역 날씨를 확인하세요
+        </div>
+      </div>
+
+      <div id="map" style="width: 100vw; height: 100vh;"></div>
+    </header>
+
+    <script>
+      // multicampus location
+      let latitude = 37.501298707210466;
+      let longitude = 127.03959901356761;
+
+      /***** kakao map render *****/
+      const renderMap = () => {
+        const mapContainer = document.querySelector("#map");
+        const mapOption = {
+          center: new kakao.maps.LatLng(latitude, longitude),
+          level: 12,
+        };
+
+        const map = new kakao.maps.Map(mapContainer, mapOption);
+
+        // addd control
+        const mapTypeControl = new kakao.maps.MapTypeControl();
+        map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+
+        const zoomControl = new kakao.maps.ZoomControl();
+        map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
+        /* 클릭 이벤트로 위도, 경도 가져오기 */
+        kakao.maps.event.addListener(map, "click", function (mouseEvent) {
+          const latlng = mouseEvent.latLng;
+          marker.setPosition(latlng);
+
+          latitude = latlng.getLat();
+          longitude = latlng.getLng();
+
+          getDate();
+        });
+
+        /* Locate Marker */
+        const markerPosition = new kakao.maps.LatLng(latitude, longitude);
+
+        /* Create Marker */
+        const marker = new kakao.maps.Marker({ position: markerPosition });
+        marker.setMap(map);
+      };
+
+      /***** get icon image *****/
+      const getIconPath = (id) => {
+        return `https://openweathermap.org/img/wn/${id}@2x.png`;
+      };
+
+      /***** componenets *****/
+      const dayTempContainer = (data) => {
+        const { icon, description } = data.weather[0];
+        const iconPath = getIconPath(icon);
+        console.log(data.weather[0]);
+
+        return `
+          <li class="list-group-item d-flex flex-column justify-content-center align-items-center">
+            <img width=100px src="${iconPath}" alt="Today weather" />
+            <div>${description}</div>
+          </li>`;
+      };
+
+      const dayInformationContainer = (data) => {
+        const { name } = data;
+        const { humidity } = data.main;
+        const { temp_max, temp_min } = data.main;
+        const changeTempMin = (temp_min - 273.15).toFixed(1);
+        const changeTempMax = (temp_max - 273.15).toFixed(1);
+
+        return `
+        <li class="list-group-item">${changeTempMin}°C ~ ${changeTempMax}°C</li>
+        <li class="list-group-item"">
+          <img src="images/location.png" width="16px" />
+          <span>${name}</span>
+        </li>
+        <li class="list-group-item">
+          <img src="images/025-humidity.png" width="16px" />
+          <span>${humidity}%</span>
+        </li>`;
+      };
+
+      const dayWeatherCard = document.querySelector(".day-weather-card");
+
+      const dayComponent = (data) =>
+        `${dayTempContainer(data)} ${dayInformationContainer(data)}`;
+
+      /***** get weather *****/
+      const getDate = async () => {
+        const { data } = await axios.get(
+          `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=c918354ffea3717e557fe67919df6f21`
+        );
+        dayWeatherCard.innerHTML = dayComponent(data);
+      };
+
+      /***** init *****/
+      renderMap();
+      getDate();
+    </script>
+  </body>
+</html>
